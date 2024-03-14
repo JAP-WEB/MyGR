@@ -4,6 +4,7 @@ import re
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qsl, urlparse
 import redis
+import uuid
 
 # Código basado en:
 # https://realpython.com/python-http-server/
@@ -29,12 +30,37 @@ class WebRequestHandler(BaseHTTPRequestHandler):
             return match.groupdict()
     
     def get_book(self, book_id):
+        session_id = self.get_session()
+        r.lpush(f"session:{session_id}", f"book:{book_id}")
         self.send_response(200)
         self.send_header("Content-Type", "text/html")
+        self.write_session_cookie(session_id)
         self.end_headers()
         # book_info = f"<h1> Info del libro {book_id} es correcto </h1>".encode("utf-8")
         book_info = r.get(f"book:{book_id}") or "No existe".encode("utf-8")
-        self.wfile.write(book_info)
+        self.wfile.write(str(book_info).encode("utf-8"))
+        self.wfile.write(f"session:{session_id}".encode("utf-8"))
+        book_list = r.lrange(f"session:{session_id}",0,-1)
+        for book in book_list:
+            self.wfile.write(f"book:{book_id}".encode("utf-8"))
+        
+    def cookies(self):
+        return SimpleCookie(self.headers.get("Cookie"))
+    
+    def get_session(self):
+        cookies = self.cookies()
+        session_id = None
+        if not cookies:
+            session_id = uuid.uuid4()
+        else:
+            session_id = cookies["session_id"].value
+        return session_id
+        
+    def write_session_cookie(self, session_id):
+        cookies = SimpleCookie()
+        cookies["session_id"] = session_id
+        cookies["session_id"]["max-age"] = 1000
+        self.send_header("Set-Cookie", cookies.output(header=""))
     
     def url_mapping_response(self):
         for (pattern, method) in mappings:
