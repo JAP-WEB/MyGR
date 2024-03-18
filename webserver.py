@@ -19,8 +19,7 @@ import urllib.parse #división y creación de URL en base a los componentes
 # https://docs.python.org/3/library/http.cookies.html
 #--------------------------------------------------------------------------#
 
-#establecer conexión tipo local con la base de datos Redis
-#db especifica el número de base de datos en la cual se hará la conexión
+#Conexión local con REDIS
 r = redis.Redis(host="localhost", port = 6379, db = 0)
 
 # definición de tuplas de mapeo, patrón de URL y llamada a la función 
@@ -146,14 +145,18 @@ class WebRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Set-Cookie", cookies.output(header="")) #envia la cookie como header
 
     #manejo de solicitudes HTTP GET
+    #funcion GET que solicita al servidor que te de la informacion al abrir el navegador 
+    #obtiene el metodo que se esta solictando, tomando el path de la URL como argumento
+    #obtiene el nombre del metodo y lo llama pasando los parametros del diccionario. 
     def do_GET(self):
-        method = self.get_method(self.url.path) #obtiene el método de acuerdo al path del url
-        if method:
+        method = self.get_method(self.url.path)
+        if method:  # Verifica si encuentra el metodo
             method_name, dict_params = method
             method = getattr(self, method_name)
-            method(**dict_params) #llama al metodo y le pasa los parametros
+            method(**dict_params) # ** = expande los argumentos del diccionario
             return
         else:
+            # si no se encontro ningun metodo, el servidor manda error 404
             self.send_error(404, "Not Found")
             
        

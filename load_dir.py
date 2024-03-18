@@ -25,11 +25,11 @@ def load_dir(path):
 #ini=dice de palabras de los html (libros)
 def create_index(book_id, html):
     soup = BeautifulSoup(html, 'html.parser') #crea un objeto que contiene la estructura del html
-    ts = str(soup.p).lower() #obtiene el contenido de <p></p> y lo convierte a minusculas
+    ts = str(soup.p).lower() #obtiene el contenido de <p></p> y lo convierte a minúsculas
     palas = ts.split() #divide las palabras por espacios 
     for t in palas:
         t = t.replace(",","") #reemplaza/borra las comas del final de la palabra
-        r.sadd(t,book_id) #agrega el identificador y añade la claves al indice de mapeo
+        r.sadd(t,book_id) #agrega el identificador y añade la claves al índice de mapeo
     
 #ejecución del método para cargar los html (libros)
 load_dir('html/books/')
